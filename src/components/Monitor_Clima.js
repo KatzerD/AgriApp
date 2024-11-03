@@ -11,6 +11,10 @@ const InputLocation = ({ onLocationSubmit }) => {
   const [location, setLocation] = useState(DEFAULT_LOCATION);
 
   const handleSubmit = () => {
+    if (location.trim() === '') {
+      alert('Por favor, ingresa una ubicación válida.');
+      return;
+    }
     onLocationSubmit(location);
   };
 
@@ -82,23 +86,31 @@ const WeatherData = ({ data }) => {
   );
 };
 
-
 export default function ClimateScreen() {
   const [weatherData, setWeatherData] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const fetchWeatherData = async (location) => {
     try {
       const geocodingUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${API_KEY}`;
       const geocodeResponse = await axios.get(geocodingUrl);
+
+      // Verifica si la respuesta está vacía
+      if (geocodeResponse.data.length === 0) {
+        setErrorMessage('No se encontró la ubicación. Por favor, verifica el nombre de la ciudad.');
+        return;
+      }
+
       const { lat, lon } = geocodeResponse.data[0];
 
       const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`;
-      console.log(weatherUrl);
       const weatherResponse = await axios.get(weatherUrl);
 
       setWeatherData(weatherResponse.data);
+      setErrorMessage(''); // Resetea el mensaje de error si la búsqueda es exitosa
     } catch (error) {
       console.error('Error al obtener datos del clima:', error);
+      setErrorMessage('Ocurrió un error al obtener los datos del clima. Inténtalo de nuevo más tarde.');
     }
   };
 
@@ -110,7 +122,11 @@ export default function ClimateScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Monitoreo del Clima</Text>
       <InputLocation onLocationSubmit={fetchWeatherData} />
-      {weatherData ? <WeatherData data={weatherData} /> : <Text>Cargando datos del clima...</Text>}
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : (
+        weatherData ? <WeatherData data={weatherData} /> : <Text>Cargando datos del clima...</Text>
+      )}
     </View>
   );
 }
@@ -181,26 +197,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  forecastTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
     marginBottom: 10,
-    color: '#4a9f4d',
-  },
-  forecast: {
-    flexDirection: 'row',
-  },
-  forecastDay: {
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  forecastDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-  },
-  forecastTemp: {
-    fontSize: 14,
-    color: '#333',
   },
 });

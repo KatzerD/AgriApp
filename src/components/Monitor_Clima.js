@@ -1,10 +1,206 @@
-import { Text } from '@rneui/base';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { MapPin, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, Sunrise, Sunset } from 'lucide-react-native';
 
-function Monitor_Clima() {
+// Tu clave de API de OpenWeather
+const API_KEY = '8b1c8c90459663ba5fbf6846676c1cbc';
+const DEFAULT_LOCATION = 'Ciudad del Este, Paraguay';
+
+const InputLocation = ({ onLocationSubmit }) => {
+  const [location, setLocation] = useState(DEFAULT_LOCATION);
+
+  const handleSubmit = () => {
+    onLocationSubmit(location);
+  };
+
   return (
-    <Text>Monitor_Clima</Text>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        placeholder="Ingrese su ubicación"
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Buscar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <MapPin color="#fff" size={20} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const WeatherIcon = ({ condition }) => {
+  switch (condition) {
+    case 'Clear':
+      return <Sun color="#FFD700" size={50} />;
+    case 'Clouds':
+      return <Cloud color="#A9A9A9" size={50} />;
+    case 'Rain':
+      return <CloudRain color="#4682B4" size={50} />;
+    default:
+      return <Sun color="#FFD700" size={50} />;
+  }
+};
+
+const WeatherData = ({ data }) => {
+  const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString('es-ES');
+  const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString('es-ES');
+
+  return (
+    <ScrollView style={styles.weatherContainer}>
+      <View style={styles.currentWeather}>
+        <WeatherIcon condition={data.weather[0].main} />
+        <Text style={styles.temperature}>{Math.round(data.main.temp)}°C</Text>
+        <Text style={styles.description}>{data.weather[0].description}</Text>
+      </View>
+      <View style={styles.details}>
+        <View style={styles.detailItem}>
+          <Thermometer color="#4a9f4d" size={24} />
+          <Text style={styles.detailText}>Sensación térmica: {Math.round(data.main.feels_like)}°C</Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Droplets color="#4a9f4d" size={24} />
+          <Text style={styles.detailText}>Humedad: {data.main.humidity}%</Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Wind color="#4a9f4d" size={24} />
+          <Text style={styles.detailText}>Viento: {data.wind.speed} m/s, {data.wind.deg}°</Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Sunrise color="#4a9f4d" size={24} />
+          <Text style={styles.detailText}>Salida del sol: {sunrise}</Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Sunset color="#4a9f4d" size={24} />
+          <Text style={styles.detailText}>Puesta del sol: {sunset}</Text>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+
+export default function ClimateScreen() {
+  const [weatherData, setWeatherData] = useState(null);
+
+  const fetchWeatherData = async (location) => {
+    try {
+      const geocodingUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${API_KEY}`;
+      const geocodeResponse = await axios.get(geocodingUrl);
+      const { lat, lon } = geocodeResponse.data[0];
+
+      const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`;
+      console.log(weatherUrl);
+      const weatherResponse = await axios.get(weatherUrl);
+
+      setWeatherData(weatherResponse.data);
+    } catch (error) {
+      console.error('Error al obtener datos del clima:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeatherData(DEFAULT_LOCATION);
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Monitoreo del Clima</Text>
+      <InputLocation onLocationSubmit={fetchWeatherData} />
+      {weatherData ? <WeatherData data={weatherData} /> : <Text>Cargando datos del clima...</Text>}
+    </View>
   );
 }
 
-export default Monitor_Clima;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#4a9f4d',
+    textAlign: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: '#4a9f4d',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  button: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  weatherContainer: {
+    flex: 1,
+  },
+  currentWeather: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  temperature: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  description: {
+    fontSize: 18,
+    color: '#666',
+  },
+  details: {
+    marginBottom: 20,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  detailText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  forecastTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#4a9f4d',
+  },
+  forecast: {
+    flexDirection: 'row',
+  },
+  forecastDay: {
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  forecastDate: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  forecastTemp: {
+    fontSize: 14,
+    color: '#333',
+  },
+});

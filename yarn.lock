@@ -1592,6 +1592,11 @@
     prompts "^2.4.2"
     semver "^7.5.2"
 
+"@react-native-community/progress-bar-android@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/@react-native-community/progress-bar-android/-/progress-bar-android-1.0.5.tgz"
+  integrity sha512-/IYLHdoqeDqqGQMh9/qYgIReISBIu09lLNbrn70r98+IqQe9WFLuhAr/sdrDKxCUZDQyLqUc0p3rJ50VV0tR3g==
+
 "@react-native/assets-registry@0.76.1":
   version "0.76.1"
   resolved "https://registry.npmjs.org/@react-native/assets-registry/-/assets-registry-0.76.1.tgz"
@@ -5938,7 +5943,7 @@ react-native-vector-icons@>7.0.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native@*, "react-native@>= 0.30.0", react-native@0.76.1:
+react-native@*, "react-native@>= 0.30.0", react-native@>=0.60.0, react-native@0.76.1:
   version "0.76.1"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.76.1.tgz"
   integrity sha512-z4KnbrnnAvloRs9NGnah3u6/LK3IbtNMrvByxa3ifigbMlsMY4WPRYV9lvt/hH4Mzt8bfuI+utnOxFyJTTq3lg==
@@ -6004,7 +6009,7 @@ react-test-renderer@18.3.1:
     react-shallow-renderer "^16.15.0"
     scheduler "^0.23.2"
 
-react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.5.1 || ^17.0.0 || ^18.0.0", react@^18.2.0, react@^18.3.1, "react@>= 15.2.1", react@>=16.8, react@>=17.0.0, react@18.3.1:
+react@*, "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^16.5.1 || ^17.0.0 || ^18.0.0", react@^18.2.0, react@^18.3.1, "react@>= 15.2.1", react@>=16.8, react@>=16.8.6, react@>=17.0.0, react@18.3.1:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react/-/react-18.3.1.tgz"
   integrity sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==

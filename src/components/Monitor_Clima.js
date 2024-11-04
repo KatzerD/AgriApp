@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
@@ -107,7 +108,7 @@ export default function ClimateScreen() {
       const weatherResponse = await axios.get(weatherUrl);
 
       setWeatherData(weatherResponse.data);
-      setErrorMessage(''); // Resetea el mensaje de error si la búsqueda es exitosa
+      setErrorMessage('');
     } catch (error) {
       console.error('Error al obtener datos del clima:', error);
       setErrorMessage('Ocurrió un error al obtener los datos del clima. Inténtalo de nuevo más tarde.');

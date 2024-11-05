@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, Alert, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Modal, TextInput, Alert, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, History } from 'lucide-react-native';
+import { Calendar } from 'react-native-calendars';
+import { StyleSheet } from 'react-native';
+
 
 const CalendarioCRUD = () => {
   const [eventos, setEventos] = useState([]);
@@ -128,7 +131,36 @@ const CalendarioCRUD = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Gestión de Eventos</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.titulo}>Gestión de Eventos</Text>
+        <View style={styles.iconContainer}>
+          <TouchableOpacity
+            style={styles.botonHistorial}
+            onPress={() => setHistorialModalVisible(true)}
+          >
+            <History color="#fff" size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.botonAgregar}
+            onPress={() => {
+              setNuevoEvento({ nombre: '', descripcion: '', fecha: '', historial: [] });
+              setEditandoEventoId(null);
+              setModalVisible(true);
+            }}
+          >
+            <Plus color="#fff" size={24} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Calendar
+        current={new Date().toISOString().split('T')[0]}
+        markedDates={eventos.reduce((acc, evento) => {
+          acc[evento.fecha] = { marked: true, dotColor: '#50cebb' };
+          return acc;
+        }, {})}
+        style={styles.calendario}
+      />
 
       <FlatList
         data={eventos}
@@ -156,40 +188,18 @@ const CalendarioCRUD = () => {
         )}
       />
 
-      <TouchableOpacity
-        style={styles.botonHistorial}
-        onPress={() => setHistorialModalVisible(true)}
-      >
-        <History color="#fff" size={24} />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.botonAgregar}
-        onPress={() => {
-          setNuevoEvento({ nombre: '', descripcion: '', fecha: '', historial: [] });
-          setEditandoEventoId(null);
-          setModalVisible(true);
-        }}
-      >
-        <Plus color="#fff" size={24} />
-      </TouchableOpacity>
-
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitulo}>{editandoEventoId ? 'Editar Evento' : 'Agregar Evento'}</Text>
-            </View>
-            <Text style={styles.label}>Nombre del Evento</Text>
+            <Text style={styles.modalTitulo}>{editandoEventoId ? 'Editar Evento' : 'Agregar Evento'}</Text>
             <TextInput
-              placeholder="Ingresa el nombre del evento"
+              placeholder="Nombre del Evento"
               style={styles.input}
               value={nuevoEvento.nombre}
               onChangeText={(text) => setNuevoEvento({ ...nuevoEvento, nombre: text })}
             />
-            <Text style={styles.label}>Descripción</Text>
             <TextInput
-              placeholder="Ingresa la descripción del evento"
+              placeholder="Descripción"
               style={styles.input}
               value={nuevoEvento.descripcion}
               onChangeText={(text) => setNuevoEvento({ ...nuevoEvento, descripcion: text })}
@@ -512,6 +522,85 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 10,
+  },
+  calendar: {
+    marginBottom: 20,
+    borderRadius: 10,
+    borderColor: '#4a9f4d',
+    borderWidth: 1,
+  },
+  fechaTexto: {
+    color: '#4a9f4d',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitulo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#4a9f4d',
+  },
+  historialScroll: {
+    maxHeight: '80%',
+  },
+  botonCerrarHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  textoBotonCerrar: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titulo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4a9f4d',
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  botonHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  botonAgregar: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 25,
+  },
+  calendario: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    marginVertical: 20,
   },
 });
 

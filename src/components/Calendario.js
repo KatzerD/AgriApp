@@ -1,187 +1,263 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import { Seed, Droplet, Flask, Wheat, X, Corn, Soybean } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, Alert, ScrollView } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Plus, History } from 'lucide-react-native';
 
-// Datos de ejemplo para eventos
-const eventosIniciales = [
-  { id: 1, fecha: '2023-05-15', cultivo: 'Soja', tipo: 'Siembra', observaciones: 'Parcela A' },
-  { id: 2, fecha: '2023-05-20', cultivo: 'Maíz', tipo: 'Riego', observaciones: 'Parcela B' },
-  { id: 3, fecha: '2023-06-01', cultivo: 'Trigo', tipo: 'Fertilización', observaciones: 'Parcela C' },
-  { id: 4, fecha: '2023-09-10', cultivo: 'Soja', tipo: 'Cosecha', observaciones: 'Parcela A' },
-];
+const CalendarioCRUD = () => {
+  const [eventos, setEventos] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [nuevoEvento, setNuevoEvento] = useState({ nombre: '', descripcion: '', fecha: '', historial: [] });
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
+  const [editandoEventoId, setEditandoEventoId] = useState(null);
+  const [historial, setHistorial] = useState([]);
+  const [historialModalVisible, setHistorialModalVisible] = useState(false);
 
-const tiposDeEvento = [
-  { etiqueta: 'Siembra', valor: 'Siembra', icono: Seed },
-  { etiqueta: 'Riego', valor: 'Riego', icono: Droplet },
-  { etiqueta: 'Fertilización', valor: 'Fertilización', icono: Flask },
-  { etiqueta: 'Cosecha', valor: 'Cosecha', icono: Wheat },
-];
+  useEffect(() => {
+    cargarEventos();
+  }, []);
 
-const iconosDeCultivo = {
-  'Soja': Soybean,
-  'Maíz': Corn,
-  'Trigo': Wheat,
-};
+  const cargarEventos = async () => {
+    try {
+      const eventosGuardados = await AsyncStorage.getItem('eventos');
+      if (eventosGuardados) {
+        setEventos(JSON.parse(eventosGuardados));
+      }
+      const historialGuardado = await AsyncStorage.getItem('historial');
+      if (historialGuardado) {
+        setHistorial(JSON.parse(historialGuardado));
+      }
+    } catch (error) {
+      console.log('Error al cargar eventos:', error);
+    }
+  };
 
-const FormularioEvento = ({ visible, onClose, onSubmit, fechaSeleccionada }) => {
-  const [cultivo, setCultivo] = useState('');
-  const [tipo, setTipo] = useState('');
-  const [observaciones, setObservaciones] = useState('');
+  const guardarEventos = async (eventosActualizados, historialActualizado) => {
+    try {
+      await AsyncStorage.setItem('eventos', JSON.stringify(eventosActualizados));
+      await AsyncStorage.setItem('historial', JSON.stringify(historialActualizado));
+    } catch (error) {
+      console.log('Error al guardar eventos:', error);
+    }
+  };
 
-  const manejarEnvio = () => {
-    if (cultivo && tipo) {
-      onSubmit({
-        id: Date.now(),
-        fecha: fechaSeleccionada,
-        cultivo,
-        tipo,
-        observaciones,
+  const manejarGuardarEvento = () => {
+    if (!nuevoEvento.nombre || !nuevoEvento.descripcion || !nuevoEvento.fecha) {
+      Alert.alert('Error', 'Todos los campos son obligatorios');
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    let cambios = [];
+    const nuevoHistorial = editandoEventoId
+      ? [...nuevoEvento.historial]
+      : [{ accion: 'Creado', fecha: timestamp }];
+
+    if (editandoEventoId) {
+      const eventoOriginal = eventos.find((evento) => evento.id === editandoEventoId);
+
+      if (eventoOriginal.nombre !== nuevoEvento.nombre) {
+        cambios.push(`Nombre cambiado de "${eventoOriginal.nombre}" a "${nuevoEvento.nombre}"`);
+      }
+      if (eventoOriginal.descripcion !== nuevoEvento.descripcion) {
+        cambios.push(`Descripción cambiada de "${eventoOriginal.descripcion}" a "${nuevoEvento.descripcion}"`);
+      }
+      if (eventoOriginal.fecha !== nuevoEvento.fecha) {
+        cambios.push(`Fecha cambiada de "${eventoOriginal.fecha}" a "${nuevoEvento.fecha}"`);
+      }
+      nuevoHistorial.push({ accion: 'Editado', cambios, fecha: timestamp });
+    }
+
+    const eventoActualizado = { ...nuevoEvento, historial: nuevoHistorial };
+    let eventosActualizados;
+    let historialActualizado = [...historial];
+
+    if (editandoEventoId) {
+      eventosActualizados = eventos.map((evento) =>
+        evento.id === editandoEventoId ? eventoActualizado : evento
+      );
+      historialActualizado.push({
+        accion: 'Editado',
+        evento: nuevoEvento.nombre,
+        cambios,
+        fecha: timestamp,
       });
-      setCultivo('');
-      setTipo('');
-      setObservaciones('');
-      onClose();
+    } else {
+      eventosActualizados = [...eventos, { ...eventoActualizado, id: Date.now() }];
+      historialActualizado.push({
+        accion: 'Agregado',
+        evento: nuevoEvento.nombre,
+        cambios: [],
+        fecha: timestamp,
+      });
     }
+
+    setEventos(eventosActualizados);
+    setHistorial(historialActualizado);
+    guardarEventos(eventosActualizados, historialActualizado);
+    setNuevoEvento({ nombre: '', descripcion: '', fecha: '', historial: [] });
+    setModalVisible(false);
+    setEditandoEventoId(null);
+  };
+
+  const onChangeFecha = (event, selectedDate) => {
+    const currentDate = selectedDate || fechaSeleccionada;
+    setMostrarDatePicker(false);
+    setFechaSeleccionada(currentDate);
+    setNuevoEvento({ ...nuevoEvento, fecha: currentDate.toISOString().split('T')[0] });
+  };
+
+  const eliminarEvento = (id, nombre) => {
+    const eventosActualizados = eventos.filter(evento => evento.id !== id);
+    const timestamp = new Date().toISOString();
+    const historialActualizado = [
+      ...historial,
+      { accion: 'Eliminado', evento: nombre, cambios: [], fecha: timestamp }
+    ];
+    guardarEventos(eventosActualizados, historialActualizado);
+    setEventos(eventosActualizados);
+    setHistorial(historialActualizado);
+  };
+
+  const abrirModalParaEdicion = (evento) => {
+    setNuevoEvento(evento);
+    setEditandoEventoId(evento.id);
+    setModalVisible(true);
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true}>
-      <View style={estilos.modalContenedor}>
-        <View style={estilos.modalContenido}>
-          <TouchableOpacity style={estilos.botonCerrar} onPress={onClose}>
-            <X color="#4a9f4d" size={24} />
-          </TouchableOpacity>
-          <Text style={estilos.tituloModal}>Agregar Evento</Text>
-          <TextInput
-            style={estilos.input}
-            placeholder="Nombre del cultivo"
-            value={cultivo}
-            onChangeText={setCultivo}
-          />
-          <View style={estilos.contenedorTipo}>
-            {tiposDeEvento.map((tipoEvento) => (
+    <View style={styles.container}>
+      <Text style={styles.titulo}>Gestión de Eventos</Text>
+
+      <FlatList
+        data={eventos}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.evento}>
+            <Text style={styles.eventoTexto}>Nombre: {item.nombre}</Text>
+            <Text style={styles.eventoTexto}>Descripción: {item.descripcion}</Text>
+            <Text style={styles.eventoTexto}>Fecha: {item.fecha}</Text>
+            <View style={styles.botonContainer}>
               <TouchableOpacity
-                key={tipoEvento.valor}
-                style={[
-                  estilos.botonTipo,
-                  tipo === tipoEvento.valor && estilos.botonTipoSeleccionado,
-                ]}
-                onPress={() => setTipo(tipoEvento.valor)}
+                style={styles.botonEditar}
+                onPress={() => abrirModalParaEdicion(item)}
               >
-                <tipoEvento.icono
-                  color={tipo === tipoEvento.valor ? '#fff' : '#4a9f4d'}
-                  size={24}
-                />
-                <Text
-                  style={[
-                    estilos.textoBotonTipo,
-                    tipo === tipoEvento.valor && estilos.textoBotonTipoSeleccionado,
-                  ]}
-                >
-                  {tipoEvento.etiqueta}
-                </Text>
+                <Text style={styles.botonTexto}>Editar</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-          <TextInput
-            style={estilos.input}
-            placeholder="Observaciones"
-            value={observaciones}
-            onChangeText={setObservaciones}
-            multiline
-          />
-          <TouchableOpacity style={estilos.botonEnviar} onPress={manejarEnvio}>
-            <Text style={estilos.textoBotonEnviar}>Guardar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-const ListaEventos = ({ eventos }) => {
-  const obtenerIconoEvento = (tipo, cultivo) => {
-    if (iconosDeCultivo[cultivo]) {
-      return iconosDeCultivo[cultivo];
-    }
-    const tipoEvento = tiposDeEvento.find((te) => te.valor === tipo);
-    return tipoEvento ? tipoEvento.icono : null;
-  };
-
-  return (
-    <ScrollView style={estilos.contenedorListaEventos}>
-      <Text style={estilos.tituloListaEventos}>Próximos Eventos</Text>
-      {eventos.map((evento) => {
-        const IconoEvento = obtenerIconoEvento(evento.tipo, evento.cultivo);
-        return (
-          <View key={evento.id} style={estilos.itemEvento}>
-            {IconoEvento && <IconoEvento color="#4a9f4d" size={24} style={estilos.iconoEvento} />}
-            <View style={estilos.detallesEvento}>
-              <Text style={estilos.fechaEvento}>{evento.fecha}</Text>
-              <Text style={estilos.cultivoEvento}>{evento.cultivo}</Text>
-              <Text style={estilos.tipoEvento}>{evento.tipo}</Text>
-              {evento.observaciones && <Text style={estilos.observacionesEvento}>{evento.observaciones}</Text>}
+              <TouchableOpacity
+                style={styles.botonEliminar}
+                onPress={() => eliminarEvento(item.id, item.nombre)}
+              >
+                <Text style={styles.botonTexto}>Eliminar</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        );
-      })}
-    </ScrollView>
+        )}
+      />
+
+      <TouchableOpacity
+        style={styles.botonHistorial}
+        onPress={() => setHistorialModalVisible(true)}
+      >
+        <History color="#fff" size={24} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.botonAgregar}
+        onPress={() => {
+          setNuevoEvento({ nombre: '', descripcion: '', fecha: '', historial: [] });
+          setEditandoEventoId(null);
+          setModalVisible(true);
+        }}
+      >
+        <Plus color="#fff" size={24} />
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitulo}>{editandoEventoId ? 'Editar Evento' : 'Agregar Evento'}</Text>
+            </View>
+            <Text style={styles.label}>Nombre del Evento</Text>
+            <TextInput
+              placeholder="Ingresa el nombre del evento"
+              style={styles.input}
+              value={nuevoEvento.nombre}
+              onChangeText={(text) => setNuevoEvento({ ...nuevoEvento, nombre: text })}
+            />
+            <Text style={styles.label}>Descripción</Text>
+            <TextInput
+              placeholder="Ingresa la descripción del evento"
+              style={styles.input}
+              value={nuevoEvento.descripcion}
+              onChangeText={(text) => setNuevoEvento({ ...nuevoEvento, descripcion: text })}
+              multiline
+            />
+            <TouchableOpacity onPress={() => setMostrarDatePicker(true)}>
+              <Text style={styles.fechaTexto}>
+                {nuevoEvento.fecha ? `Fecha: ${nuevoEvento.fecha}` : 'Seleccionar Fecha'}
+              </Text>
+            </TouchableOpacity>
+
+            {mostrarDatePicker && (
+              <DateTimePicker
+                value={fechaSeleccionada}
+                mode="date"
+                display="default"
+                onChange={onChangeFecha}
+              />
+            )}
+
+            <TouchableOpacity style={styles.botonGuardar} onPress={manejarGuardarEvento}>
+              <Text style={styles.textoBotonGuardar}>{editandoEventoId ? 'Guardar Cambios' : 'Guardar Evento'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.botonCancelar} onPress={() => setModalVisible(false)}>
+              <Text style={styles.textoBotonCancelar}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={historialModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>Historial de Modificaciones</Text>
+            <ScrollView style={styles.historialScroll}>
+              {historial.map((item, index) => (
+                <View key={index} style={styles.historialEntry}>
+                  <Text style={styles.historialTexto}>{item.accion} - {item.evento}</Text>
+                  <Text style={styles.historialFecha}>{new Date(item.fecha).toLocaleString()}</Text>
+                  {item.cambios && item.cambios.map((cambio, idx) => (
+                    <Text key={idx} style={styles.cambioDetalle}>• {cambio}</Text>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.botonCerrarHistorial} onPress={() => setHistorialModalVisible(false)}>
+              <Text style={styles.textoBotonCerrar}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
-export default function PantallaCalendario() {
-  const [eventos, setEventos] = useState(eventosIniciales);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
 
-  const agregarEvento = (nuevoEvento) => {
-    setEventos([...eventos, nuevoEvento]);
-  };
 
-  const fechasMarcadas = eventos.reduce((acc, evento) => {
-    acc[evento.fecha] = { marked: true, dotColor: '#4a9f4d' };
-    return acc;
-  }, {});
 
-  return (
-    <View style={estilos.contenedor}>
-      <Text style={estilos.titulo}>Calendario de Siembra y Cosecha</Text>
-      <Calendar
-        onDayPress={(dia) => {
-          setFechaSeleccionada(dia.dateString);
-          setModalVisible(true);
-        }}
-        markedDates={fechasMarcadas}
-        theme={{
-          backgroundColor: '#ffffff',
-          calendarBackground: '#ffffff',
-          textSectionTitleColor: '#4a9f4d',
-          selectedDayBackgroundColor: '#4a9f4d',
-          selectedDayTextColor: '#ffffff',
-          todayTextColor: '#4a9f4d',
-          dayTextColor: '#2d4150',
-          textDisabledColor: '#d9e1e8',
-          dotColor: '#4a9f4d',
-          selectedDotColor: '#ffffff',
-          arrowColor: '#4a9f4d',
-          monthTextColor: '#4a9f4d',
-          indicatorColor: '#4a9f4d',
-        }}
-      />
-      <ListaEventos eventos={eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))} />
-      <FormularioEvento
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSubmit={agregarEvento}
-        fechaSeleccionada={fechaSeleccionada}
-      />
-    </View>
-  );
-}
 
-const estilos = StyleSheet.create({
-  contenedor: {
+
+
+
+
+
+
+
+const styles = StyleSheet.create({
+  container: {
     flex: 1,
     padding: 20,
     backgroundColor: '#f0f0f0',
@@ -193,27 +269,71 @@ const estilos = StyleSheet.create({
     color: '#4a9f4d',
     textAlign: 'center',
   },
-  modalContenedor: {
+  evento: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  eventoTexto: {
+    fontSize: 16,
+  },
+  botonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  botonEditar: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+  },
+  botonEliminar: {
+    backgroundColor: '#ff6b6b',
+    padding: 10,
+    borderRadius: 5,
+  },
+  botonesInferiores: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  botonAgregar: {
+    backgroundColor: '#4a9f4d',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  botonHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  botonTexto: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContenido: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
+  modalContent: {
     width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
   },
-  botonCerrar: {
-    alignSelf: 'flex-end',
-  },
-  tituloModal: {
+  modalTitulo: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#4a9f4d',
+    marginBottom: 10,
     textAlign: 'center',
+    color: '#4a9f4d',
   },
   input: {
     borderWidth: 1,
@@ -222,69 +342,177 @@ const estilos = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  contenedorTipo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  fechaTexto: {
+    color: '#4a9f4d',
+    textAlign: 'center',
     marginBottom: 10,
   },
-  botonTipo: {
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#4a9f4d',
-    borderRadius: 5,
-  },
-  botonTipoSeleccionado: {
-    backgroundColor: '#4a9f4d',
-  },
-  textoBotonTipo: {
-    color: '#4a9f4d',
-    marginTop: 5,
-  },
-  textoBotonTipoSeleccionado: {
-    color: '#fff',
-  },
-  botonEnviar: {
+  botonGuardar: {
     backgroundColor: '#4a9f4d',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
   },
-  textoBotonEnviar: {
+  textoBotonGuardar: {
     color: '#fff',
     fontWeight: 'bold',
   },
-  contenedorListaEventos: {
+  botonCancelar: {
+    backgroundColor: 'gray',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  textoBotonCancelar: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  historialEntry: {
+    marginBottom: 10,
+  },
+  historialTexto: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  historialFecha: {
+    fontSize: 14,
+    color: '#777',
+    marginBottom: 5,
+  },
+  cambioDetalle: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 10,
+  },
+  botonCerrarHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
     marginTop: 20,
   },
-  tituloListaEventos: {
-    fontSize: 18,
+  textoBotonCerrar: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitulo: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#4a9f4d',
   },
-  itemEvento: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    marginBottom: 10,
+    backgroundColor: '#fff',
   },
-  iconoEvento: {
-    marginRight: 10,
+  fechaTexto: {
+    color: '#4a9f4d',
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 10,
   },
-  detallesEvento: {
-    flex: 1,
+  botonGuardar: {
+    backgroundColor: '#4a9f4d',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
   },
-  fechaEvento: {
+  textoBotonGuardar: {
+    color: '#fff',
     fontWeight: 'bold',
   },
-  cultivoEvento: {
-    fontStyle: 'italic',
+  botonCancelar: {
+    backgroundColor: 'gray',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
   },
-  tipoEvento: {
-    color: '#555',
+  textoBotonCancelar: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
-  observacionesEvento: {
-    color: '#777',
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  botonCerrarHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  textoBotonCerrar: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  historialScroll: {
+    maxHeight: '80%',
+    marginBottom: 10,
+  },
+  botonHistorial: {
+    position: 'absolute',
+    right: 90,
+    bottom: 20,
+    backgroundColor: '#4a9f4d',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  botonAgregar: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#4a9f4d',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  botonCerrarHistorial: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
   },
 });
+
+export default CalendarioCRUD;

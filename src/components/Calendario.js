@@ -116,7 +116,7 @@ const CalendarioCRUD = () => {
     const timestamp = new Date().toISOString();
     const historialActualizado = [
       ...historial,
-      { accion: 'Eliminado', evento: nombre, cambios: [], fecha: timestamp }
+      { accion: 'Eliminado', evento: nombre, cambios: [], fecha: timestamp },
     ];
     guardarEventos(eventosActualizados, historialActualizado);
     setEventos(eventosActualizados);
@@ -255,30 +255,7 @@ const CalendarioCRUD = () => {
   );
 };
 
-
-
-
-
-
-
-
-
-
-
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f0f0f0',
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#4a9f4d',
-    textAlign: 'center',
-  },
   evento: {
     backgroundColor: '#fff',
     padding: 15,
@@ -308,73 +285,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
   },
-  botonAgregar: {
-    backgroundColor: '#4a9f4d',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  botonHistorial: {
-    backgroundColor: '#4a9f4d',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
   botonTexto: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-  },
-  modalTitulo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#4a9f4d',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  fechaTexto: {
-    color: '#4a9f4d',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  botonGuardar: {
-    backgroundColor: '#4a9f4d',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  textoBotonGuardar: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  botonCancelar: {
-    backgroundColor: 'gray',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  textoBotonCancelar: {
     color: '#fff',
     fontWeight: 'bold',
   },
@@ -396,28 +307,6 @@ const styles = StyleSheet.create({
     color: '#555',
     marginLeft: 10,
   },
-  botonCerrarHistorial: {
-    backgroundColor: '#4a9f4d',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  textoBotonCerrar: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  modalTitulo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4a9f4d',
-  },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -431,12 +320,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     backgroundColor: '#fff',
-  },
-  fechaTexto: {
-    color: '#4a9f4d',
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 10,
   },
   botonGuardar: {
     backgroundColor: '#4a9f4d',
@@ -460,68 +343,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    elevation: 5,
-  },
-  botonCerrarHistorial: {
-    backgroundColor: '#4a9f4d',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  textoBotonCerrar: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   modalHeader: {
     alignItems: 'center',
     marginBottom: 15,
-  },
-  historialScroll: {
-    maxHeight: '80%',
-    marginBottom: 10,
-  },
-  botonHistorial: {
-    position: 'absolute',
-    right: 90,
-    bottom: 20,
-    backgroundColor: '#4a9f4d',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  botonAgregar: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: '#4a9f4d',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  botonCerrarHistorial: {
-    backgroundColor: '#4a9f4d',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
   },
   calendar: {
     marginBottom: 20,

@@ -28,10 +28,10 @@ const InputLocation = ({ onLocationSubmit }) => {
         onChangeText={setLocation}
       />
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Buscar</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <MapPin color="#fff" size={20} />
+        <Text style={styles.buttonText}>
+          Buscar
+          <MapPin color="#fff" size={20} />
+        </Text>
       </TouchableOpacity>
     </View>
   );

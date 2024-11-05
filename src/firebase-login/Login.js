@@ -9,7 +9,24 @@ const Login = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const validateEmail = (_email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(_email);
+  };
+
   const handleLogin = () => {
+    setError('');
+
+    if (!email || !password) {
+      setError('Por favor, complete todos los campos.');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Por favor, ingrese un correo electrónico válido.');
+      return;
+    }
+
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;

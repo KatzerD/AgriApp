@@ -7,12 +7,18 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/
 const Register = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
   const handleRegister = () => {
     setError('');
     setMessage('');
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
 
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
@@ -61,6 +67,16 @@ const Register = ({ navigation }) => {
           placeholder="Contraseña"
           value={password}
           onChangeText={setPassword}
+          secureTextEntry
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <Lock color="#4a9f4d" size={24} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirmar Contraseña"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
           secureTextEntry
         />
       </View>

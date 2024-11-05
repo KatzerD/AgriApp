@@ -4,7 +4,6 @@ import axios from 'axios';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MapPin, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, Sunrise, Sunset } from 'lucide-react-native';
 
-// Tu clave de API de OpenWeather
 const API_KEY = '8b1c8c90459663ba5fbf6846676c1cbc';
 const DEFAULT_LOCATION = 'Ciudad del Este, Paraguay';
 
@@ -23,7 +22,7 @@ const InputLocation = ({ onLocationSubmit }) => {
     <View style={styles.inputContainer}>
       <TextInput
         style={styles.input}
-        placeholder="Ingrese su ubicación"
+        placeholder="Ciudad, País"
         value={location}
         onChangeText={setLocation}
       />

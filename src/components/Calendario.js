@@ -6,7 +6,6 @@ import { Plus, History } from 'lucide-react-native';
 import { Calendar } from 'react-native-calendars';
 import { StyleSheet } from 'react-native';
 
-
 const CalendarioCRUD = () => {
   const [eventos, setEventos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -16,6 +15,8 @@ const CalendarioCRUD = () => {
   const [editandoEventoId, setEditandoEventoId] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [historialModalVisible, setHistorialModalVisible] = useState(false);
+  const [eventosDelDiaModalVisible, setEventosDelDiaModalVisible] = useState(false);
+  const [eventosDelDia, setEventosDelDia] = useState([]);
 
   useEffect(() => {
     cargarEventos();
@@ -129,6 +130,12 @@ const CalendarioCRUD = () => {
     setModalVisible(true);
   };
 
+  const mostrarEventosDelDia = (day) => {
+    const _eventosDelDia = eventos.filter(evento => evento.fecha === day.dateString);
+    setEventosDelDia(_eventosDelDia);
+    setEventosDelDiaModalVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -160,6 +167,7 @@ const CalendarioCRUD = () => {
           return acc;
         }, {})}
         style={styles.calendario}
+        onDayPress={mostrarEventosDelDia}
       />
 
       <FlatList
@@ -246,6 +254,29 @@ const CalendarioCRUD = () => {
               ))}
             </ScrollView>
             <TouchableOpacity style={styles.botonCerrarHistorial} onPress={() => setHistorialModalVisible(false)}>
+              <Text style={styles.textoBotonCerrar}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={eventosDelDiaModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>Eventos del Día</Text>
+            <ScrollView style={styles.eventosDelDiaScroll}>
+              {eventosDelDia.length > 0 ? (
+                eventosDelDia.map((evento, index) => (
+                  <View key={index} style={styles.eventoDelDia}>
+                    <Text style={styles.eventoDelDiaTitulo}>{evento.nombre}</Text>
+                    <Text style={styles.eventoDelDiaDescripcion}>{evento.descripcion}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noEventosTexto}>No hay eventos para este día</Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity style={styles.botonCerrarEventosDelDia} onPress={() => setEventosDelDiaModalVisible(false)}>
               <Text style={styles.textoBotonCerrar}>Cerrar</Text>
             </TouchableOpacity>
           </View>
@@ -425,6 +456,37 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 10,
     marginVertical: 20,
+  },
+  eventosDelDiaScroll: {
+    maxHeight: '80%',
+  },
+  eventoDelDia: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  eventoDelDiaTitulo: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4a9f4d',
+  },
+  eventoDelDiaDescripcion: {
+    fontSize: 14,
+    color: '#333',
+  },
+  noEventosTexto: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  botonCerrarEventosDelDia: {
+    backgroundColor: '#4a9f4d',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
   },
 });
 
